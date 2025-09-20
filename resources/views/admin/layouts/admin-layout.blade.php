@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>@yield('title')</title>
+    <link href="https://fonts.maateen.me/solaiman-lipi/font.css" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('dashboard/css/style.css') }}">
+    @stack('styles')
+
+</head>
+
+<body>
+    <!-- Overlay for Mobile -->
+    <div id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">DigiTrack</div>
+        <form action="#" method="POST" class="search-form">
+            @csrf
+            <input type="text" name="query" placeholder="Central ID..." required>
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+        <ul>
+            @can('Admin Dashboard')
+            <li><a href="{{ route('dashboard.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            @endcan
+        
+            
+        
+            @can('View Categories')
+            <li class="has-submenu">
+                <a href="#"><i class="fas fa-user-shield"></i> Roles & Permissions</a>
+                <ul class="submenu">
+                    <li><a href="{{ route('dashboard.categories') }}"><i class="fas fa-tags"></i> Manage Category</a></li>
+                    <li><a href="{{ route('dashboard.roles') }}"><i class="fas fa-user-tag"></i> Manage Roles</a></li>
+                    <li><a href="{{ route('permissions.list') }}"><i class="fas fa-key"></i> Manage Permissions</a></li>
+                    <li><a href="{{ route('roles.permissions') }}"><i class="fas fa-users-cog"></i> Assign Roles & Permissions</a></li>
+                    <li><a href="{{ route('users.index') }}"><i class="fas fa-user"></i> Users</a></li>
+                </ul>
+            </li>
+            @endcan
+
+            
+            <!-- Logout Menu Option for Authenticated Users -->
+            @auth
+            <li>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
+            </li>
+            @endauth
+        </ul>
+    </div>
+    
+    
+
+    <div class="header">
+        <button id="sidebarToggle"><i class="fas fa-bars"></i></button>
+        <div class="profile-menu">
+            <button class="profile-button">
+                <i class="fas fa-user"></i> {{ Auth::user()->name }}
+            </button>
+            <div class="dropdown-menu">
+                <a href=""><i class="fas fa-user"></i> My Profile</a>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <!-- Content -->
+    <div class="content" id="content">
+
+        @yield('content')
+        <div id="loader-overlay">
+            <div id="loader"></div>
+        </div>
+
+    </div>
+    <!-- Bootstrap JS & jQuery (optional) -->
+    {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> <!-- Bootstrap Bundle --> --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
+    <script src="{{ asset('dashboard/js/custom.js') }}"></script> <!-- Your custom JS file -->
+
+    @stack('scripts')
+    <script>
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Completed', 'Pending', 'In Progress'],
+                datasets: [{
+                    data: [152, 104, 45],
+                    backgroundColor: ['#28a745', '#ffc107', '#17a2b8'],
+                }]
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May'],
+                datasets: [{
+                    label: 'Interventions',
+                    data: [30, 45, 60, 50, 80],
+                    backgroundColor: '#007bff',
+                }]
+            }
+        });
+    </script>
+    
+</body>
+
+</html>
