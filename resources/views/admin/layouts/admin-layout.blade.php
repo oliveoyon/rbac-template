@@ -126,40 +126,11 @@
     {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> <!-- Bootstrap Bundle --> --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
     <script src="{{ asset('dashboard/js/custom.js') }}"></script> <!-- Your custom JS file -->
 
     @stack('scripts')
-    <script>
-        // Pie Chart
-        const pieCtx = document.getElementById('pieChart').getContext('2d');
-        new Chart(pieCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Completed', 'Pending', 'In Progress'],
-                datasets: [{
-                    data: [152, 104, 45],
-                    backgroundColor: ['#28a745', '#ffc107', '#17a2b8'],
-                }]
-            }
-        });
-
-        // Bar Chart
-        const barCtx = document.getElementById('barChart').getContext('2d');
-        new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: ['January', 'February', 'March', 'April', 'May'],
-                datasets: [{
-                    label: 'Interventions',
-                    data: [30, 45, 60, 50, 80],
-                    backgroundColor: '#007bff',
-                }]
-            }
-        });
-    </script>
-
+    
 </body>
 
 </html>

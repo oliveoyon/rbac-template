@@ -9,6 +9,14 @@ use Illuminate\Validation\Rule;
 
 class PermissionGroupController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:View Permission Group')->only(['index']);
+        $this->middleware('permission:Create Permission Group')->only(['store']);
+        $this->middleware('permission:Edit Permission Group')->only(['edit', 'update']);
+        $this->middleware('permission:Delete Permission Group')->only(['destroy']);
+    }
+
     public function index()
     {
         $groups = PermissionGroup::all();

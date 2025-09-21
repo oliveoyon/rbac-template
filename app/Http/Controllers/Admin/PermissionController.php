@@ -9,8 +9,17 @@ use App\Models\PermissionGroup;
 use Illuminate\Validation\Rule;
 
 
+
 class PermissionController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to specific methods
+        $this->middleware('permission:View Permission')->only(['index']);
+        $this->middleware('permission:Create Permission')->only(['store']);
+        $this->middleware('permission:Edit Permission')->only(['edit', 'update']);
+        $this->middleware('permission:Delete Permission')->only(['destroy']);
+    }
     // Show all permissions
     public function index()
     {

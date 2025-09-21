@@ -10,6 +10,14 @@ use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:View Roles')->only(['index']);
+        $this->middleware('permission:Create Role')->only(['store']);
+        $this->middleware('permission:Edit Role')->only(['edit', 'update']);
+        $this->middleware('permission:Delete Role')->only(['destroy']);
+        $this->middleware('permission:Assign Permissions')->only(['permissions', 'assignPermissions']);
+    }
     // Show all roles
     public function index()
     {

@@ -12,6 +12,15 @@ use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:View Users')->only(['index']);
+        $this->middleware('permission:Create Users')->only(['create', 'store']);
+        $this->middleware('permission:Edit Users')->only(['edit', 'update']);
+        $this->middleware('permission:Delete Users')->only(['destroy']);
+        $this->middleware('permission:View User Permissions')->only(['destroy']);
+    }
+
     public function index()
     {
         $users = User::with('roles', 'permissions')->get();
