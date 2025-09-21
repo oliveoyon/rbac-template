@@ -1,175 +1,225 @@
 @extends('admin.layouts.admin-layout')
+@section('title','User Management')
 
-@section('title','Users')
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.5/dist/sweetalert2.min.css">
+<style>
+.card-user { transition: transform .2s; }
+.card-user:hover { transform: scale(1.02); }
+.badge-role { background-color: #0d6efd; color:#fff; margin:2px;}
+.badge-read { background-color:#28a745;color:#fff;margin:2px;}
+.badge-write { background-color:#007bff;color:#fff;margin:2px;}
+.badge-delete { background-color:#dc3545;color:#fff;margin:2px;}
+.offcanvas-body { max-height:80vh; overflow-y:auto; }
+</style>
+@endpush
 
 @section('content')
-<div class="container mt-4">
+<div class="container py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Users</h2>
-        <button class="btn btn-primary" id="addUserBtn"><i class="fas fa-plus"></i> Add User</button>
+        <h3>User Management</h3>
+        <button class="btn btn-success" data-bs-toggle="offcanvas" data-bs-target="#addUserCanvas">+ Add User</button>
     </div>
 
-    <table class="table table-striped" id="usersTable">
-        <thead>
-            <tr>
-                <th>ID</th><th>Name</th><th>Email</th><th>Roles</th><th>Permissions</th><th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($users as $user)
-            <tr id="user-{{ $user->id }}">
-                <td>{{ $user->id }}</td>
-                <td>{{ $user->name }}</td>
-                <td>{{ $user->email }}</td>
-                <td>{{ $user->roles->pluck('name')->join(', ') }}</td>
-                <td>{{ $user->permissions->pluck('name')->join(', ') }}</td>
-                <td>
-                    <button class="btn btn-sm btn-info editBtn" data-id="{{ $user->id }}"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger deleteBtn" data-id="{{ $user->id }}"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
+    <div class="row" id="userCards">
+        @foreach($users as $user)
+        <div class="col-md-4">
+            <div class="card card-user shadow-sm mb-3">
+                <div class="card-body">
+                    <h5>{{ $user->name }}</h5>
+                    <h6 class="text-muted">{{ $user->email }}</h6>
+                    <div class="mt-2">
+                        <strong>Roles:</strong>
+                        @foreach($user->roles as $role)
+                            <span class="badge badge-role">{{ $role->name }}</span>
+                        @endforeach
+                    </div>
+                    <div class="mt-2">
+                        <strong>Permissions:</strong>
+                        @foreach($user->permissions as $perm)
+                            <span class="badge badge-read">{{ $perm->name }}</span>
+                        @endforeach
+                    </div>
 
-<!-- User Modal -->
-<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form id="userForm">
-        <div class="modal-header">
-          <h5 class="modal-title" id="userModalLabel">Add User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          @csrf
-          <input type="hidden" id="userId">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label>Name</label>
-              <input type="text" class="form-control" id="userName" name="name" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label>Email</label>
-              <input type="email" class="form-control" id="userEmail" name="email" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label>Password</label>
-              <input type="password" class="form-control" id="userPassword" name="password">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label>Roles</label>
-            <div class="d-flex flex-wrap">
-              @foreach($roles as $role)
-                <div class="form-check me-3">
-                  <input class="form-check-input roleCheckbox" type="checkbox" value="{{ $role->name }}" id="role{{ $role->id }}">
-                  <label class="form-check-label" for="role{{ $role->id }}">{{ $role->name }}</label>
+                    <div class="mt-3 d-flex justify-content-between">
+                        <button class="btn btn-sm btn-outline-secondary btn-edit" data-id="{{ $user->id }}" data-bs-toggle="offcanvas" data-bs-target="#editUserCanvas{{ $user->id }}">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ $user->id }}">Delete</button>
+                    </div>
                 </div>
-              @endforeach
             </div>
-          </div>
-          <div class="mb-3">
-            <label>Direct Permissions</label>
-            @foreach($permissions->groupBy('group.name') as $groupName => $perms)
-              <h6 class="mt-2">{{ $groupName ?? 'Ungrouped' }}</h6>
-              <div class="d-flex flex-wrap">
-                @foreach($perms as $perm)
-                  <div class="form-check me-3">
-                    <input class="form-check-input permCheckbox" type="checkbox" value="{{ $perm->name }}" id="perm{{ $perm->id }}">
-                    <label class="form-check-label" for="perm{{ $perm->id }}">{{ $perm->name }}</label>
-                  </div>
-                @endforeach
-              </div>
-            @endforeach
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary" id="saveUserBtn">Save</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+        <!-- Edit Offcanvas -->
+        <div class="offcanvas offcanvas-end" id="editUserCanvas{{ $user->id }}">
+            <div class="offcanvas-header">
+                <h5>Edit User - {{ $user->name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body">
+                <form class="ajax-form" data-method="PUT" data-id="{{ $user->id }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password (leave blank to keep current)</label>
+                        <input type="password" name="password" class="form-control">
+                    </div>
+
+                    <h6>Roles</h6>
+                    @foreach($roles as $role)
+                        <div class="form-check">
+                            <input type="checkbox" name="roles[]" value="{{ $role->name }}" class="form-check-input" {{ $user->roles->contains('name',$role->name)?'checked':'' }}>
+                            <label class="form-check-label">{{ $role->name }}</label>
+                        </div>
+                    @endforeach
+
+                    <hr>
+                    <h6>Permissions</h6>
+                    @foreach($permissions as $perm)
+                        <div class="form-check">
+                            <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" class="form-check-input" {{ $user->permissions->contains('id',$perm->id)?'checked':'' }}>
+                            <label class="form-check-label">{{ $perm->name }}</label>
+                        </div>
+                    @endforeach
+
+                    <button type="submit" class="btn btn-success mt-3 w-100 btn-submit">Save Changes</button>
+                </form>
+            </div>
         </div>
-      </form>
+        @endforeach
     </div>
-  </div>
 </div>
+
+<!-- Add User Offcanvas -->
+<div class="offcanvas offcanvas-end" id="addUserCanvas">
+    <div class="offcanvas-header">
+        <h5>Add New User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form class="ajax-form" data-method="POST">
+            @csrf
+            <div class="mb-3">
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <h6>Roles</h6>
+            @foreach($roles as $role)
+                <div class="form-check">
+                    <input type="checkbox" name="roles[]" value="{{ $role->name }}" class="form-check-input">
+                    <label class="form-check-label">{{ $role->name }}</label>
+                </div>
+            @endforeach
+
+            <hr>
+            <h6>Permissions</h6>
+            @foreach($permissions as $perm)
+                <div class="form-check">
+                    <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" class="form-check-input">
+                    <label class="form-check-label">{{ $perm->name }}</label>
+                </div>
+            @endforeach
+
+            <button type="submit" class="btn btn-primary mt-3 w-100 btn-submit">Save User</button>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    const modal = new bootstrap.Modal(document.getElementById('userModal'));
-    const form = document.getElementById('userForm');
     const token = document.querySelector('meta[name="csrf-token"]').content;
 
-    const userIdInput = document.getElementById('userId');
-    const nameInput = document.getElementById('userName');
-    const emailInput = document.getElementById('userEmail');
-    const passwordInput = document.getElementById('userPassword');
-
-    document.getElementById('addUserBtn').addEventListener('click', ()=>{
-        form.reset();
-        userIdInput.value='';
-        document.querySelectorAll('.roleCheckbox,.permCheckbox').forEach(c=>c.checked=false);
-        document.getElementById('userModalLabel').textContent='Add User';
-        modal.show();
-    });
-
-    document.querySelectorAll('.editBtn').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-            fetch(`/admin/users/${btn.dataset.id}/edit`)
-            .then(res=>res.json())
-            .then(data=>{
-                userIdInput.value=data.user.id;
-                nameInput.value=data.user.name;
-                emailInput.value=data.user.email;
-                passwordInput.value='';
-                document.querySelectorAll('.roleCheckbox').forEach(c=>c.checked=data.user_roles.includes(c.value));
-                document.querySelectorAll('.permCheckbox').forEach(c=>c.checked=data.user_perms.includes(c.value));
-                document.getElementById('userModalLabel').textContent='Edit User';
-                modal.show();
-            });
+    function collectFormData(form){
+        let data = {};
+        form.querySelectorAll('input, select, textarea').forEach(input=>{
+            if(input.type==='checkbox'){
+                if(!data[input.name]) data[input.name] = [];
+                if(input.checked) data[input.name].push(input.value);
+            } else data[input.name] = input.value;
         });
-    });
+        return data;
+    }
 
-    form.addEventListener('submit', function(e){
-        e.preventDefault();
-        const id=userIdInput.value;
-        const url=id?`/admin/users/${id}`:'/admin/users';
-        const method=id?'PUT':'POST';
-        const payload={
-            name:nameInput.value,
-            email:emailInput.value,
-            password:passwordInput.value,
-            roles:Array.from(document.querySelectorAll('.roleCheckbox:checked')).map(c=>c.value),
-            permissions:Array.from(document.querySelectorAll('.permCheckbox:checked')).map(c=>c.value)
-        };
-        fetch(url,{method:method,headers:{'Content-Type':'application/json','X-CSRF-TOKEN':token},body:JSON.stringify(payload)})
-        .then(async res=>{
-            if(res.status===422){ let data=await res.json(); Swal.fire('Validation error',JSON.stringify(data.errors),'error'); }
-            else return res.json();
-        })
-        .then(data=>{
-            if(data){
-                Swal.fire('Success', data.message,'success').then(()=>location.reload());
+    document.querySelectorAll('.ajax-form').forEach(form=>{
+        form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            const btn = form.querySelector('.btn-submit');
+            btn.disabled = true;
+
+            const method = form.dataset.method || 'POST';
+            const id = form.dataset.id;
+            const url = method==='POST'? '{{ route("admin.users.store") }}' : '{{ url("admin/users") }}/'+id;
+
+            const data = collectFormData(form);
+            try{
+                const res = await fetch(url,{
+                    method:method,
+                    headers:{'Content-Type':'application/json','X-CSRF-TOKEN':token},
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                if(json.success){
+                    Swal.fire('Success', json.message,'success').then(()=> location.reload());
+                } else {
+                    let errs='';
+                    if(json.errors){
+                        for(const key in json.errors){
+                            errs += json.errors[key].join(', ')+'<br>';
+                        }
+                    }
+                    Swal.fire('Error', errs || json.message,'error');
+                }
+            } catch(err){
+                Swal.fire('Error','Something went wrong','error');
+            } finally{
+                btn.disabled=false;
             }
         });
     });
 
-    document.addEventListener('click',function(e){
-        if(e.target.closest('.deleteBtn')){
-            let id=e.target.closest('.deleteBtn').dataset.id;
-            Swal.fire({title:'Delete?',text:'This will remove user.',icon:'warning',showCancelButton:true})
-            .then(result=>{
+    document.querySelectorAll('.btn-delete').forEach(btn=>{
+        btn.addEventListener('click', function(){
+            const id = btn.dataset.id;
+            Swal.fire({
+                title:'Are you sure?',
+                text:'User will be deleted permanently!',
+                icon:'warning',
+                showCancelButton:true,
+                confirmButtonText:'Yes, delete'
+            }).then(async (result)=>{
                 if(result.isConfirmed){
-                    fetch(`/admin/users/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':token}})
-                    .then(res=>res.json())
-                    .then(data=>{
-                        Swal.fire('Deleted!',data.message,'success').then(()=>location.reload());
-                    });
+                    try{
+                        const res = await fetch('{{ url("admin/users") }}/'+id,{
+                            method:'DELETE',
+                            headers:{'X-CSRF-TOKEN':token}
+                        });
+                        const json = await res.json();
+                        if(json.success) Swal.fire('Deleted!', json.message,'success').then(()=> location.reload());
+                        else Swal.fire('Error', json.message,'error');
+                    }catch(err){
+                        Swal.fire('Error','Something went wrong','error');
+                    }
                 }
             });
-        }
+        });
     });
 });
 </script>

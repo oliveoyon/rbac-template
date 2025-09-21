@@ -4,104 +4,114 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
-use App\Models\Permission; // your extended Permission with group()
+use App\Models\PermissionGroup;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = User::with('roles', 'permissions')->get();
-        $roles = Role::all();
-        $permissions = Permission::with('group')->get();
+        return view('admin.rbac.users.index', compact('users'));
+    }
 
-        return view('admin.rbac.users', compact('users', 'roles', 'permissions'));
+    public function create()
+    {
+        $roles = Role::all();
+        $permissionGroups = PermissionGroup::with('permissions')->get();
+        return view('admin.rbac.users.create_edit', compact('roles', 'permissionGroups'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'password'   => 'nullable|string|min:6',
-            'roles'      => 'array',
-            'roles.*'    => Rule::exists('roles', 'name'),  // ensure role names exist
-            'permissions'   => 'array',
-            'permissions.*' => Rule::exists('permissions', 'name'), // ensure permission names exist
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'roles' => 'array',
+            'permissions' => 'array',
         ]);
 
-        $user = new User();
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'is_active' => $request->has('is_active') ? true : false,
+        ]);
+
+        if ($request->roles) {
+            $user->assignRole($request->roles);
         }
-        $user->save();
 
-        $user->syncRoles($validated['roles'] ?? []);
-        $user->syncPermissions($validated['permissions'] ?? []);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully!',
-            'user' => $user
-        ]);
-    }
-
-    public function edit($id)
-    {
-        $user = User::with('roles', 'permissions')->findOrFail($id);
-
-        return response()->json([
-            'user'       => $user,
-            'user_roles' => $user->roles->pluck('name')->toArray(),
-            'user_perms' => $user->permissions->pluck('name')->toArray(),
-        ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => ['required','email', Rule::unique('users','email')->ignore($user->id)],
-            'password'   => 'nullable|string|min:6',
-            'roles'      => 'array',
-            'roles.*'    => Rule::exists('roles', 'name'),
-            'permissions'   => 'array',
-            'permissions.*' => Rule::exists('permissions', 'name'),
-        ]);
-
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
+        if ($request->permissions) {
+            $user->givePermissionTo($request->permissions);
         }
-        $user->save();
 
-        $user->syncRoles($validated['roles'] ?? []);
-        $user->syncPermissions($validated['permissions'] ?? []);
+        // Return JSON if AJAX
+        if ($request->expectsJson()) {
+            return response()->json(['success' => 'User created successfully']);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User updated successfully!',
-            'user' => $user
-        ]);
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
-    public function destroy($id)
+    public function edit(User $user)
     {
-        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $permissionGroups = PermissionGroup::with('permissions')->get();
+        $userRoles = $user->roles->pluck('name')->toArray();
+        $userPermissions = $user->permissions->pluck('name')->toArray();
+
+        return view('admin.rbac.users.create_edit', compact(
+            'user',
+            'roles',
+            'permissionGroups',
+            'userRoles',
+            'userPermissions'
+        ));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'roles' => 'array',
+            'permissions' => 'array',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
+            'is_active' => $request->has('is_active') ? true : false, 
+        ]);
+
+        // Sync roles
+        $user->syncRoles($request->roles ?? []);
+
+        // Sync direct permissions
+        $user->syncPermissions($request->permissions ?? []);
+
+        // Return JSON if AJAX
+        if ($request->expectsJson()) {
+            return response()->json(['success' => 'User updated successfully']);
+        }
+
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user, Request $request)
+    {
         $user->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User deleted successfully!'
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json(['success' => 'User deleted successfully']);
+        }
+
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 }
-
-

@@ -30,12 +30,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::resource('roles', RoleController::class)->except(['show']);
     Route::get('roles/{role}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
     Route::post('roles/{role}/assign-permissions', [RoleController::class, 'assignPermissions'])->name('roles.assignPermissions');
-   Route::resource('users', UserController::class);
 
 
-
-
-
+Route::resource('users', UserController::class);
 
     
 });
