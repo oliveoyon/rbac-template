@@ -8,6 +8,7 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 use App\Models\PermissionGroup;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
@@ -49,7 +50,9 @@ class UserController extends Controller
             $user->givePermissionTo($request->permissions);
         }
 
-        // Return JSON if AJAX
+        // Clear Spatie permission cache for instant sync
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         if ($request->expectsJson()) {
             return response()->json(['success' => 'User created successfully']);
         }
@@ -62,16 +65,19 @@ class UserController extends Controller
         $roles = Role::all();
         $permissionGroups = PermissionGroup::with('permissions')->get();
         $userRoles = $user->roles->pluck('name')->toArray();
-        $userPermissions = $user->permissions->pluck('name')->toArray();
+
+        // Only direct permissions
+        $directPermissions = $user->permissions->pluck('name')->toArray();
 
         return view('admin.rbac.users.create_edit', compact(
             'user',
             'roles',
             'permissionGroups',
             'userRoles',
-            'userPermissions'
+            'directPermissions'
         ));
     }
+
 
     public function update(Request $request, User $user)
     {
@@ -87,7 +93,7 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password ? Hash::make($request->password) : $user->password,
-            'is_active' => $request->has('is_active') ? true : false, 
+            'is_active' => $request->has('is_active') ? true : false,
         ]);
 
         // Sync roles
@@ -96,7 +102,9 @@ class UserController extends Controller
         // Sync direct permissions
         $user->syncPermissions($request->permissions ?? []);
 
-        // Return JSON if AJAX
+        // Clear Spatie permission cache for instant sync
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
         if ($request->expectsJson()) {
             return response()->json(['success' => 'User updated successfully']);
         }
@@ -112,6 +120,6 @@ class UserController extends Controller
             return response()->json(['success' => 'User deleted successfully']);
         }
 
-        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
     }
 }

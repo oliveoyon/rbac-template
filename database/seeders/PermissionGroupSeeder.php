@@ -11,24 +11,27 @@ class PermissionGroupSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create groups
-        $userMgmt = PermissionGroup::create(['name' => 'User Management']);
-        $productMgmt = PermissionGroup::create(['name' => 'Product Management']);
+        // 1. Create permission groups
+        $rbacMgmt = PermissionGroup::firstOrCreate(['name' => 'RBAC Management']);
+        $userMgmt = PermissionGroup::firstOrCreate(['name' => 'User Management']);
 
         // 2. Create roles
-        $adminRole = Role::create(['name' => 'admin']);
-        $userRole = Role::create(['name' => 'user']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $userRole = Role::firstOrCreate(['name' => 'user']);
 
-        // 3. Create permissions and assign group_id
+        // 3. Define permissions per group
         $permissions = [
+            $rbacMgmt->id => ['view permission groups', 'create permission groups', 'edit permission groups', 'delete permission groups',
+                              'view permissions', 'create permissions', 'edit permissions', 'delete permissions',
+                              'view roles', 'create roles', 'edit roles', 'delete roles', 'assign roles & permissions'],
             $userMgmt->id => ['view users', 'create users', 'edit users', 'delete users'],
-            $productMgmt->id => ['view products', 'create products', 'edit products', 'delete products'],
         ];
 
+        // 4. Create permissions and assign to admin role
         foreach ($permissions as $groupId => $perms) {
-            foreach ($perms as $perm) {
-                $permission = Permission::create([
-                    'name' => $perm,
+            foreach ($perms as $permName) {
+                $permission = Permission::firstOrCreate([
+                    'name' => $permName,
                     'group_id' => $groupId,
                 ]);
 

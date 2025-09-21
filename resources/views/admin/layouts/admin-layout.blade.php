@@ -26,47 +26,72 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo">DigiTrack</div>
+
         <form action="#" method="POST" class="search-form">
             @csrf
             <input type="text" name="query" placeholder="Central ID..." required>
             <button type="submit"><i class="fas fa-search"></i></button>
         </form>
-        <ul>
-            @can('Admin Dashboard')
-            <li><a href="{{ route('dashboard.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            @endcan
-        
-            
-        
-            @can('View Categories')
-            <li class="has-submenu">
-                <a href="#"><i class="fas fa-user-shield"></i> Roles & Permissions</a>
-                <ul class="submenu">
-                    <li><a href="{{ route('dashboard.categories') }}"><i class="fas fa-tags"></i> Manage Category</a></li>
-                    <li><a href="{{ route('dashboard.roles') }}"><i class="fas fa-user-tag"></i> Manage Roles</a></li>
-                    <li><a href="{{ route('permissions.list') }}"><i class="fas fa-key"></i> Manage Permissions</a></li>
-                    <li><a href="{{ route('roles.permissions') }}"><i class="fas fa-users-cog"></i> Assign Roles & Permissions</a></li>
-                    <li><a href="{{ route('users.index') }}"><i class="fas fa-user"></i> Users</a></li>
-                </ul>
-            </li>
-            @endcan
 
-            
-            <!-- Logout Menu Option for Authenticated Users -->
-            @auth
-            <li>
-                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-            </li>
-            @endauth
-        </ul>
+<div class="sidebar" id="sidebar">
+    <div class="logo">DigiTrack</div>
+    <form action="#" method="POST" class="search-form">
+        <input type="text" name="query" placeholder="Central ID..." required>
+        <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+    <ul>
+        <!-- Dashboard -->
+        <li>
+            <a href="/admin/home">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        </li>
+
+        <!-- Roles & Permissions -->
+        <li class="has-submenu">
+            <a href="#"><i class="fas fa-user-shield"></i> Roles & Permissions</a>
+            <ul class="submenu">
+                <li>
+                    <a href="/admin/permission-groups">
+                        <i class="fas fa-layer-group"></i> Permission Groups
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/permissions">
+                        <i class="fas fa-key"></i> Permissions
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/roles">
+                        <i class="fas fa-user-tag"></i> Roles
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="/admin/users">
+                        <i class="fas fa-user"></i> Users
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Logout -->
+        <li>
+            <a href="/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            <form id="logout-form" action="/logout" method="POST" style="display: none;">
+                <input type="hidden" name="_token" value="CSRF_TOKEN_HERE">
+            </form>
+        </li>
+    </ul>
+</div>
+
+
     </div>
-    
-    
+
+
+
 
     <div class="header">
         <button id="sidebarToggle"><i class="fas fa-bars"></i></button>
@@ -85,8 +110,8 @@
             </div>
         </div>
     </div>
-    
-    
+
+
 
     <!-- Content -->
     <div class="content" id="content">
@@ -134,7 +159,7 @@
             }
         });
     </script>
-    
+
 </body>
 
 </html>
