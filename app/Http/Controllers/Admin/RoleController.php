@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Models\Permission;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
@@ -21,8 +22,13 @@ class RoleController extends Controller
     // Show all roles
     public function index()
     {
-        $roles = Role::all();
+        $user = Auth::user();
+        $roles = $user->hasRole('Super Admin')
+            ? Role::all()
+            : Role::where('name', '!=', 'Super Admin')->get();
+            
         $permissions = Permission::with('group')->get();
+
         return view('admin.rbac.roles', compact('roles', 'permissions'));
     }
 

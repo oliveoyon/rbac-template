@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use App\Models\PermissionGroup;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -29,7 +30,10 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::all();
+        $user = Auth::user();
+        $roles = $user->hasRole('Super Admin')
+            ? Role::all()
+            : Role::where('name', '!=', 'Super Admin')->get();
         $permissionGroups = PermissionGroup::with('permissions')->get();
         return view('admin.rbac.users.create_edit', compact('roles', 'permissionGroups'));
     }
@@ -71,7 +75,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::all();
+        $user = Auth::user();
+        $roles = $user->hasRole('Super Admin')
+            ? Role::all()
+            : Role::where('name', '!=', 'Super Admin')->get();
         $permissionGroups = PermissionGroup::with('permissions')->get();
         $userRoles = $user->roles->pluck('name')->toArray();
 

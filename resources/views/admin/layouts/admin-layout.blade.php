@@ -33,59 +33,62 @@
             <button type="submit"><i class="fas fa-search"></i></button>
         </form>
 
-<div class="sidebar" id="sidebar">
-    <div class="logo">DigiTrack</div>
-    <form action="#" method="POST" class="search-form">
-        <input type="text" name="query" placeholder="Central ID..." required>
-        <button type="submit"><i class="fas fa-search"></i></button>
-    </form>
-    <ul>
-        <!-- Dashboard -->
-        <li>
-            <a href="/admin/home">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-        </li>
-
-        <!-- Roles & Permissions -->
-        <li class="has-submenu">
-            <a href="#"><i class="fas fa-user-shield"></i> Roles & Permissions</a>
-            <ul class="submenu">
-                <li>
-                    <a href="/admin/permission-groups">
-                        <i class="fas fa-layer-group"></i> Permission Groups
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/permissions">
-                        <i class="fas fa-key"></i> Permissions
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/roles">
-                        <i class="fas fa-user-tag"></i> Roles
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="/admin/users">
-                        <i class="fas fa-user"></i> Users
-                    </a>
-                </li>
-            </ul>
-        </li>
-
-        <!-- Logout -->
-        <li>
-            <a href="/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            <form id="logout-form" action="/logout" method="POST" style="display: none;">
-                <input type="hidden" name="_token" value="CSRF_TOKEN_HERE">
+        <div class="sidebar" id="sidebar">
+            <div class="logo">DigiTrack</div>
+            <form action="#" method="POST" class="search-form">
+                <input type="text" name="query" placeholder="Central ID..." required>
+                <button type="submit"><i class="fas fa-search"></i></button>
             </form>
-        </li>
-    </ul>
-</div>
+            <ul>
+                <!-- Dashboard -->
+                <li>
+                    <a href="/admin/home">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+
+                <!-- Roles & Permissions -->
+                <li class="has-submenu">
+                    <a href="#"><i class="fas fa-user-shield"></i> Roles & Permissions</a>
+                    <ul class="submenu">
+                        <li>
+                            <a href="/admin/permission-groups">
+                                <i class="fas fa-layer-group"></i> Permission Groups
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/permissions">
+                                <i class="fas fa-key"></i> Permissions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/roles">
+                                <i class="fas fa-user-tag"></i> Roles
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="/admin/users">
+                                <i class="fas fa-user"></i> Users
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Logout -->
+                @auth
+                    <li>
+                        <a href="#"
+                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            @csrf
+                        </form>
+                    </li>
+                @endauth
+            </ul>
+        </div>
 
 
     </div>
@@ -95,21 +98,24 @@
 
     <div class="header">
         <button id="sidebarToggle"><i class="fas fa-bars"></i></button>
+
         <div class="profile-menu">
             <button class="profile-button">
                 <i class="fas fa-user"></i> {{ Auth::user()->name }}
             </button>
+
             <div class="dropdown-menu">
-                <a href=""><i class="fas fa-user"></i> My Profile</a>
-                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a href="{{ route('profile.edit') }}">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+
+                <a href="#" onclick="logoutUser(event)">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
             </div>
         </div>
     </div>
+
 
 
 
@@ -130,7 +136,24 @@
     <script src="{{ asset('dashboard/js/custom.js') }}"></script> <!-- Your custom JS file -->
 
     @stack('scripts')
-    
+
+    <script>
+        function logoutUser(event) {
+            event.preventDefault();
+
+            fetch("{{ route('logout') }}", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({})
+            }).then(() => {
+                window.location.href = "{{ route('login') }}";
+            });
+        }
+    </script>
+
 </body>
 
 </html>
